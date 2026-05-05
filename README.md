@@ -346,7 +346,7 @@ Die TFT_eSPI Library muss für das ILI9341 Display konfiguriert werden.
 **Sender:**
 ```
 Board:     ESP32 Dev Module
-Datei:     add2go_sender_v1_2_4_1/add2go_sender_v1_2_4_1.ino
+Datei:     add2go_sender_v1_2_4/add2go_sender_v1_2_4.ino
 Baudrate:  115200
 ```
 
@@ -528,8 +528,8 @@ ADD2go Empfaenger - v1.0.1
 
 ```
 ADD2go/
-├── add2go_sender_v1_2_4_1/
-│   └── add2go_sender_v1_2_4_1.ino       # Sender Firmware
+├── add2go_sender_v1_2_4/
+│   └── add2go_sender_v1_2_4.ino         # Sender Firmware
 ├── add2go_empfaenger_v1_0_2/
 │   └── add2go_empfaenger_v1_0_2.ino     # Empfänger Firmware
 ├── add2go_pcb/                           # KiCad-Projekt für die Universal-Platine (Sender / Empfänger)

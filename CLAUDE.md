@@ -12,7 +12,7 @@ BY-NC-SA 4.0.
 ## Aktuelle Versionen
 
 - **Sender:** v1.2.4 (Sketch-Ordner: `add2go_sender_v1_2_4_1/`)
-- **Empfänger:** v1.0.1 (Sketch-Ordner: `add2go_empfaenger_v1_0_1/`)
+- **Empfänger:** v1.0.2 (Sketch-Ordner: `add2go_empfaenger_v1_0_2/`)
 
 ## Hardware
 
@@ -63,7 +63,7 @@ Beide Sketches mit der **Arduino IDE** (1.8.19, ESP32 Board Package v3.x) bauen.
 - Upload-Baudrate: 115200
 - Sketch öffnen: jeweils die `.ino` im gleichnamigen Ordner
 - Sender: `add2go_sender_v1_2_4_1/add2go_sender_v1_2_4_1.ino`
-- Empfänger: `add2go_empfaenger_v1_0_1/add2go_empfaenger_v1_0_1.ino`
+- Empfänger: `add2go_empfaenger_v1_0_2/add2go_empfaenger_v1_0_2.ino`
 
 Serial Monitor zum Debuggen ebenfalls auf 115200.
 
@@ -98,7 +98,7 @@ den TFT_eSPI-Library-Ordner kopiert werden.
 ```
 ADD2go/
 ├── add2go_sender_v1_2_4_1/      # Sender-Sketch (Arduino-Ordner)
-├── add2go_empfaenger_v1_0_1/    # Empfänger-Sketch (Arduino-Ordner)
+├── add2go_empfaenger_v1_0_2/    # Empfänger-Sketch (Arduino-Ordner)
 ├── add2go_pcb/                  # KiCad-Projekt für die Universal-Platine (Sender / Empfänger)
 ├── case/                        # 3D-Druck-STLs für Empfänger-Gehäuse
 ├── images/                      # Pinout-Bilder & Foto-Doku

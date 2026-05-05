@@ -1,5 +1,5 @@
 /*
- * ADD2go Empfänger - v1.0.1
+ * ADD2go Empfänger - v1.0.2
  * =========================
  * 
  * Wireless Waagen-Display für Dinamica Generale ADD2 Waage
@@ -14,6 +14,10 @@
  * - Hardware Watchdog (5 Sekunden)
  * - Boot-Screen mit Fortschrittsbalken
  * 
+ * Changelog v1.0.2:
+ * - NEU: Signalstärke-Anzeige (4 Balken) auf dem Hauptbildschirm
+ * - Fix: SENSOR-FEHLER-Anzeige passt jetzt in den Schaufel-Button (zentriert)
+ *
  * Changelog v1.0.1:
  * - Fix: ZERO-Modus wird automatisch zurückgesetzt bei OFF oder Reconnect
  *        (verhindert falschen Offset nach Wiedereinschalten der Waage)
@@ -117,6 +121,11 @@ unsigned long lastReconnect = 0;
 const int TIMEOUT_MS = 2000;
 const int RECONNECT_INTERVAL = 5000;
 
+// Signal-Bars (NEU v1.0.2)
+int signalBars = 0;
+unsigned long lastRSSIRead = 0;
+const int RSSI_INTERVAL = 1000;  // 1 Hz Polling
+
 // ============================================
 // STATUS VARIABLEN - Schaufel
 // ============================================
@@ -176,6 +185,7 @@ int lastSchaufelGewicht = -99999;
 bool lastSchaufelPosition = false;
 bool lastButtonsEnabled = false;
 bool lastWaageOff = false;  // (v1.0.1: aus updateHauptbildschirm rausgezogen)
+int lastSignalBars = -1;    // (NEU v1.0.2)
 
 // ============================================
 // HILFSFUNKTIONEN (NEU v1.0.1)
@@ -210,7 +220,7 @@ void setup() {
   
   Serial.println();
   Serial.println("========================================");
-  Serial.println("ADD2go Empfaenger - v1.0.1");
+  Serial.println("ADD2go Empfaenger - v1.0.2");
   Serial.println("========================================");
   Serial.println();
   
@@ -344,7 +354,7 @@ void setup() {
   delay(300);
   tft.setTextColor(TFT_DARKGREY);
   tft.setTextSize(1);
-  String copyright = "(c) MST 2026 - v1.0.1";
+  String copyright = "(c) MST 2026 - v1.0.2";
   int copyW = tft.textWidth(copyright);
   tft.setCursor((320 - copyW) / 2, 200);
   tft.print(copyright);
@@ -377,7 +387,10 @@ void loop() {
   
   // 4. ADS1115 lesen (alle 100ms = 10Hz)
   handleADC();
-  
+
+  // 4b. RSSI lesen (alle 1s)
+  handleRSSI();
+
   // 5. Touch verarbeiten
   handleTouch();
   
@@ -561,6 +574,21 @@ void handleADC() {
       letzteAngezeigtesGewicht = mittelwert;
     }
     // Sonst bleibt schaufelGewichtGefiltert unverändert
+  }
+}
+
+// ============================================
+// RSSI HANDLING (NEU v1.0.2)
+// ============================================
+void handleRSSI() {
+  if (millis() - lastRSSIRead < RSSI_INTERVAL) return;
+  lastRSSIRead = millis();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    int8_t rssi = WiFi.RSSI();
+    signalBars = rssi > -50 ? 4 : rssi > -60 ? 3 : rssi > -70 ? 2 : rssi > -80 ? 1 : 0;
+  } else {
+    signalBars = 0;
   }
 }
 
@@ -854,6 +882,7 @@ void handleDisplay() {
     lastSchaufelPosition = schaufelInPosition;
     lastButtonsEnabled = add2DatenVorhanden;
     lastWaageOff = add2WaageOff;
+    lastSignalBars = signalBars;
     return;
   }
   
@@ -890,6 +919,7 @@ void zeichneAktuellesMenu() {
 void zeichneHauptbildschirm() {
   zeichneSchaufelButton();
   zeichneWiFiStatus();
+  zeichneSignalBars(signalBars);
   tft.drawLine(0, 155, 320, 155, TFT_DARKGREY);
   zeichneAdd2Gewicht();
   zeichneButton(BTN1_X, BTN1_Y, "TOTAL", !add2ZeroModus, add2DatenVorhanden && !add2WaageOff);
@@ -917,6 +947,12 @@ void updateHauptbildschirm() {
   if (wifiStatus != lastWifiStatus) {
     zeichneWiFiStatus();
     lastWifiStatus = wifiStatus;
+  }
+
+  // Signal-Bars updaten (NEU v1.0.2)
+  if (signalBars != lastSignalBars) {
+    zeichneSignalBars(signalBars);
+    lastSignalBars = signalBars;
   }
   
   // ADD2 Gewicht updaten (auch bei OFF-Wechsel!)
@@ -948,8 +984,10 @@ void zeichneSchaufelButton() {
   // (v1.0.1) Schaufel-Button zeigt jetzt auch ADS-Ausfall
   if (!adsVorhanden) {
     tft.setTextColor(TFT_RED);
-    tft.setCursor(SCHAUFEL_BTN_X + 10, SCHAUFEL_BTN_Y + 24);
-    tft.print("Schaufel: SENSOR-FEHLER");
+    const char* msg = "SENSOR-FEHLER!";
+    int16_t w = tft.textWidth(msg);
+    tft.setCursor(SCHAUFEL_BTN_X + (SCHAUFEL_BTN_W - w) / 2, SCHAUFEL_BTN_Y + 24);
+    tft.print(msg);
   } else if (!schaufelInPosition) {
     tft.setTextColor(TFT_YELLOW);
     tft.setCursor(SCHAUFEL_BTN_X + 10, SCHAUFEL_BTN_Y + 24);
@@ -969,16 +1007,31 @@ void zeichneWiFiStatus() {
   int x = 300;
   int y = 15;
   int r = 8;
-  
+
   uint16_t farbe = TFT_DARKGREY;  // Default falls switch nichts trifft
   switch (wifiStatus) {
     case WIFI_OK: farbe = TFT_GREEN; break;
     case WIFI_SUCHE: farbe = TFT_ORANGE; break;
     case WIFI_FEHLER: farbe = TFT_RED; break;
   }
-  
+
   tft.fillCircle(x, y, r + 2, TFT_BLACK);
   tft.fillCircle(x, y, r, farbe);
+}
+
+// (NEU v1.0.2) Signal-Stärke-Bars links vom WiFi-Punkt
+void zeichneSignalBars(int activeBars) {
+  // Hintergrund löschen (x=260..291, y=5..26)
+  tft.fillRect(260, 5, 32, 22, TFT_BLACK);
+
+  for (int i = 0; i < 4; i++) {
+    int barH = (i + 1) * 4;     // 4, 8, 12, 16 px
+    int barW = 5;
+    int barX = 264 + i * 7;     // 264, 271, 278, 285
+    int barY = 23 - barH;       // 19, 15, 11, 7
+    uint16_t color = (i < activeBars) ? TFT_GREEN : TFT_DARKERGREY;
+    tft.fillRect(barX, barY, barW, barH, color);
+  }
 }
 
 void zeichneAdd2Gewicht() {

@@ -10,7 +10,7 @@ ADD2go ist in erster Linie eine **Fernanzeige** für die ADD2 Waage. Zusätzlich
 *ADD2go — kabellose Fernanzeige für die ADD2-Waage*
 
 ![Version Sender](https://img.shields.io/badge/Sender-v1.2.4-green)
-![Version Empfänger](https://img.shields.io/badge/Empfänger-v1.0.1-blue)
+![Version Empfänger](https://img.shields.io/badge/Empfänger-v1.0.2-blue)
 ![Platform](https://img.shields.io/badge/Platform-ESP32-blue)
 ![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey)
 
@@ -353,7 +353,7 @@ Baudrate:  115200
 **Empfänger:**
 ```
 Board:     ESP32 Dev Module
-Datei:     add2go_empfaenger_v1_0_1/add2go_empfaenger_v1_0_1.ino
+Datei:     add2go_empfaenger_v1_0_2/add2go_empfaenger_v1_0_2.ino
 Baudrate:  115200
 ```
 
@@ -530,8 +530,8 @@ ADD2go Empfaenger - v1.0.1
 ADD2go/
 ├── add2go_sender_v1_2_4_1/
 │   └── add2go_sender_v1_2_4_1.ino       # Sender Firmware
-├── add2go_empfaenger_v1_0_1/
-│   └── add2go_empfaenger_v1_0_1.ino     # Empfänger Firmware
+├── add2go_empfaenger_v1_0_2/
+│   └── add2go_empfaenger_v1_0_2.ino     # Empfänger Firmware
 ├── add2go_pcb/                           # KiCad-Projekt für die Universal-Platine (Sender / Empfänger)
 ├── case/                                 # 3D-Druck-STLs für Empfänger-Gehäuse
 ├── images/                               # Bilder & Pinout-Diagramme
@@ -587,6 +587,10 @@ ADD2go/
 - OFF-Erkennung
 
 ### Empfänger
+
+#### v1.0.2 (Mai 2026)
+- NEU: Signalstärke-Anzeige (4 Balken) links vom WiFi-Status-Punkt
+- Fix: SENSOR-FEHLER-Anzeige passt jetzt in den Schaufel-Button (zentriert, ohne "Schaufel:"-Präfix)
 
 #### v1.0.1 (Mai 2026)
 - Fix: ZERO-Modus wird automatisch zurückgesetzt bei OFF oder Verbindungsverlust

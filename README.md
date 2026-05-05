@@ -362,14 +362,14 @@ Die TFT_eSPI Library muss für das ILI9341 Display konfiguriert werden.
 **Sender:**
 ```
 Board:     ESP32 Dev Module
-Datei:     add2go_sender_v1_2_4.ino
+Datei:     add2go_sender_v1_2_4_1/add2go_sender_v1_2_4_1.ino
 Baudrate:  115200
 ```
 
 **Empfänger:**
 ```
 Board:     ESP32 Dev Module
-Datei:     add2go_empfaenger_v1_0_1.ino
+Datei:     add2go_empfaenger_v1_0_1/add2go_empfaenger_v1_0_1.ino
 Baudrate:  115200
 ```
 
@@ -505,15 +505,15 @@ ADD2go Empfaenger - v1.0.1
 
 ```
 ADD2go/
-├── sender/
-│   └── add2go_sender_v1_2_4.ino       # Sender Firmware
-├── empfaenger/
-│   └── add2go_empfaenger_v1_0_1.ino   # Empfänger Firmware
+├── add2go_sender_v1_2_4_1/
+│   └── add2go_sender_v1_2_4_1.ino       # Sender Firmware
+├── add2go_empfaenger_v1_0_1/
+│   └── add2go_empfaenger_v1_0_1.ino     # Empfänger Firmware
 ├── images/
-│   └── winet_pinout.png                # WI-NET Stecker Pinbelegung
-├── README.md                           # Diese Dokumentation
-├── LICENSE                             # CC BY-NC-SA 4.0
-└── .gitignore                          # Git Ignore-Liste
+│   └── winet_pinout.png                  # WI-NET Stecker Pinbelegung
+├── README.md                             # Diese Dokumentation
+├── LICENSE                               # CC BY-NC-SA 4.0
+└── .gitignore                            # Git Ignore-Liste
 ```
 
 ---

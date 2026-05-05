@@ -52,6 +52,3 @@ fp-info-cache
 *.zip
 *.7z
 *.rar
-
-# TFT_eSPI library config (das ist Library-Sache, nicht Projekt)
-User_Setup.h

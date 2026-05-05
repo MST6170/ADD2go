@@ -7,6 +7,7 @@
 ADD2go ist in erster Linie eine **Fernanzeige** für die ADD2 Waage. Zusätzlich integriert ist eine **Schaufel-Wiegung** mit Drucksensor — fand ich nützlich, daher ist sie mit reingewandert.
 
 ![ADD2go](images/hero.jpg)
+*ADD2go — kabellose Fernanzeige für die ADD2-Waage*
 
 ![Version Sender](https://img.shields.io/badge/Sender-v1.2.4-green)
 ![Version Empfänger](https://img.shields.io/badge/Empfänger-v1.0.1-blue)
@@ -24,6 +25,8 @@ ADD2go besteht aus zwei ESP32-Modulen und einer optionalen WebApp:
 | **Sender** | Mischwagen | Liest RS232 von ADD2 Waage, sendet per WiFi |
 | **Empfänger** | Radlader | Zeigt Gewicht auf TFT-Display an |
 | **WebApp** | Smartphone | Gewicht im Browser anzeigen |
+
+> 💡 **Hinweis zur Hardware:** Sender und Empfänger nutzen **dieselbe Platine** — sie wird je nach Anwendung unterschiedlich bestückt (Sender: MAX3232 + WI-NET; Empfänger: zusätzlich TFT-Header, ADS1115-Header, K7812M für Drucksensor). Details siehe [`add2go_pcb/README.md`](add2go_pcb/README.md).
 
 ### Features
 
@@ -95,6 +98,7 @@ Der Sender kann sich zusätzlich mit einem externen WLAN (z.B. Hof-WLAN) verbind
 | Überspannungsschutz | 1.5KE18A | TVS-Diode 18V |
 | WI-NET Stecker | Binder M16 5-pol | Bestellnr. 09 0313 00 05 |
 | Gehäuse | [Industrie-Gehäuse 100×68×50 mm](https://de.aliexpress.com/item/1005005622148025.html) | gekauft (kein 3D-Druck nötig) |
+| Platine | Custom KiCad-Projekt | Schaltplan, Layout, Fertigung — siehe [`add2go_pcb/README.md`](add2go_pcb/README.md) |
 
 **Pinbelegung Sender:**
 
@@ -122,7 +126,10 @@ Der Sender kann sich zusätzlich mit einem externen WLAN (z.B. Hof-WLAN) verbind
 | ADC | ADS1115 | 16-bit, I²C (für Schaufel-Wiegung) |
 | Drucksensor | [XIDIBEI 0-300 bar](https://de.aliexpress.com/item/4001002862246.html) | 9-36V Versorgung, 0.5-4.5V Ausgang (für Schaufel-Wiegung, optional) |
 | Reed-Kontakt | Digital | Wiegeposition erkennen (optional) |
+| Spannungsregler 5 V | K7805M | 12 V → 5 V Schaltregler (für ESP32) |
+| Spannungsregler 12 V | K7812M | stabilisierte 12 V (für Drucksensor) |
 | Gehäuse | 3D-gedruckt | STL-Dateien, Schalter, Kabelverschraubung — siehe [`case/README.md`](case/README.md) |
+| Platine | Custom KiCad-Projekt | Schaltplan, Layout, Fertigung — siehe [`add2go_pcb/README.md`](add2go_pcb/README.md) |
 
 **Pinbelegung Empfänger:**
 
@@ -166,7 +173,7 @@ Die Pinbelegung wurde durch eigene Messungen ermittelt:
 ![WI-NET Stecker](images/winet_pinout.png)
 *WI-NET Stecker (Binder M16, 5-polig) — eigene Messung der Pinbelegung*
 
-> ⚠️ **Wichtig:** Pinbelegung von Steckgesicht (Buchse an der Waage) aus gesehen!
+> ⚠️ **Wichtig:** Pinbelegung von vorne auf die Buchse (an der Waage) gesehen!
 
 ---
 
@@ -525,7 +532,7 @@ ADD2go/
 │   └── add2go_sender_v1_2_4_1.ino       # Sender Firmware
 ├── add2go_empfaenger_v1_0_1/
 │   └── add2go_empfaenger_v1_0_1.ino     # Empfänger Firmware
-├── add2go_pcb/                           # KiCad-Projekt für die Sender-Platine
+├── add2go_pcb/                           # KiCad-Projekt für die Universal-Platine (Sender / Empfänger)
 ├── case/                                 # 3D-Druck-STLs für Empfänger-Gehäuse
 ├── images/                               # Bilder & Pinout-Diagramme
 ├── User_Setup.h                          # TFT_eSPI-Vorlage (in Library kopieren)

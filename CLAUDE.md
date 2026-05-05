@@ -16,6 +16,8 @@ BY-NC-SA 4.0.
 
 ## Hardware
 
+> Sender und Empfänger laufen auf **derselben Platine** — sie wird je nach Anwendung unterschiedlich bestückt. Schaltplan und Layout: siehe [`add2go_pcb/README.md`](add2go_pcb/README.md).
+
 ### Sender (Mischwagen)
 - ESP32-WROOM-32U mit externer 2.4-GHz-Antenne (U.FL)
 - MAX3232CPE für RS232↔TTL-Pegelwandlung
@@ -26,8 +28,10 @@ BY-NC-SA 4.0.
 ### Empfänger (Radlader)
 - ESP32-WROOM-32U mit externer Antenne
 - ILI9341 3.2" TFT 320×240 mit XPT2046 Touch
-- ADS1115 16-bit ADC (I²C 0x48) für optionalen Schaufel-Drucksensor
+- ADS1115 16-bit ADC (I²C 0x48) für Schaufel-Drucksensor (optional)
+- XIDIBEI Drucksensor 0–300 bar (9–36 V → 0,5–4,5 V), versorgt durch K7812M
 - Reed-Kontakt zur Erkennung der Wiegeposition
+- K7805M Schaltregler (12 V → 5 V) und K7812M Schaltregler (stabilisierte 12 V für Drucksensor)
 - Pins: TFT CS=5 / RST=2 / DC=4, SPI MOSI=23 SCK=18 MISO=19,
   Touch CS=15 IRQ=14, I²C SDA=21 SCL=22, Reed=GPIO36
 
@@ -53,8 +57,7 @@ BY-NC-SA 4.0.
 
 ## Kompilieren / Flashen
 
-Beide Sketches mit der **Arduino IDE** (1.8.19 oder neuer, ESP32 Board Package
-v3.x) bauen.
+Beide Sketches mit der **Arduino IDE** (1.8.19, ESP32 Board Package v3.x) bauen.
 
 - Board: **ESP32 Dev Module**
 - Upload-Baudrate: 115200
@@ -96,7 +99,7 @@ den TFT_eSPI-Library-Ordner kopiert werden.
 ADD2go/
 ├── add2go_sender_v1_2_4_1/      # Sender-Sketch (Arduino-Ordner)
 ├── add2go_empfaenger_v1_0_1/    # Empfänger-Sketch (Arduino-Ordner)
-├── add2go_pcb/                  # KiCad-Projekt für die Sender-Platine
+├── add2go_pcb/                  # KiCad-Projekt für die Universal-Platine (Sender / Empfänger)
 ├── case/                        # 3D-Druck-STLs für Empfänger-Gehäuse
 ├── images/                      # Pinout-Bilder & Foto-Doku
 ├── User_Setup.h                 # Vorlage für TFT_eSPI (in Library kopieren)
@@ -106,3 +109,8 @@ ADD2go/
 
 Sender-Gehäuse ist gekauft (Industrie-Gehäuse 100×68×50 mm, Link in der README).
 Nur das Empfänger-Gehäuse ist 3D-gedruckt.
+
+## Sub-READMEs
+
+- [`add2go_pcb/README.md`](add2go_pcb/README.md) — Platine: Schaltplan, Layout, Komponenten, Fertigung
+- [`case/README.md`](case/README.md) — Empfänger-Gehäuse: STL-Dateien, Schalter, Kabelverschraubung

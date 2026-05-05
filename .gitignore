@@ -1,0 +1,57 @@
+# Arduino IDE Build-Artefakte
+build/
+*.elf
+*.bin
+*.hex
+*.map
+*.eep
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
+
+# Backup-Dateien
+*.bak
+*.backup
+*.old
+
+# Persönliche Notizen / Drafts
+notes/
+draft/
+TODO.txt
+
+# Logs
+*.log
+
+# KiCad temp/backup files
+*.lck
+*-backups/
+*_autosave-*
+~*.lck
+fp-info-cache
+
+# Archive (wenn die Quell-Dateien da sind, brauchen wir die Archive nicht)
+*.zip
+*.7z
+*.rar
+
+# TFT_eSPI library config (das ist Library-Sache, nicht Projekt)
+User_Setup.h

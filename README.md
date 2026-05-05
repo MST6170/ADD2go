@@ -122,7 +122,7 @@ Der Sender kann sich zusätzlich mit einem externen WLAN (z.B. Hof-WLAN) verbind
 | ADC | ADS1115 | 16-bit, I²C (für Schaufel-Wiegung) |
 | Drucksensor | [XIDIBEI 0-300 bar](https://de.aliexpress.com/item/4001002862246.html) | 9-36V Versorgung, 0.5-4.5V Ausgang (für Schaufel-Wiegung, optional) |
 | Reed-Kontakt | Digital | Wiegeposition erkennen (optional) |
-| Gehäuse | 3D-gedruckt | STL-Dateien im Ordner [`case/`](case/) (Box, Deckel, Anschraubplatte, Kugelgelenk) |
+| Gehäuse | 3D-gedruckt | STL-Dateien, Schalter, Kabelverschraubung — siehe [`case/README.md`](case/README.md) |
 
 **Pinbelegung Empfänger:**
 

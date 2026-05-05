@@ -19,7 +19,7 @@ BY-NC-SA 4.0.
 ### Sender (Mischwagen)
 - ESP32-WROOM-32U mit externer 2.4-GHz-Antenne (U.FL)
 - MAX3232CPE für RS232↔TTL-Pegelwandlung
-- 7805 Linearregler (12 V → 5 V), 1N5822 Verpolschutz, 1.5KE18A TVS
+- K7805M Schaltregler (12 V → 5 V, pin-kompatibel zu 7805), 1N5822 Verpolschutz, 1.5KE18A TVS
 - Anschluss an Waage: Binder M16 5-pol Stecker (Bestellnr. 09 0313 00 05)
 - Pins: RS232-RX = GPIO16 (RXD2), TX = GPIO17 (ungenutzt)
 

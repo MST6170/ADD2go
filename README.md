@@ -90,7 +90,7 @@ Der Sender kann sich zusätzlich mit einem externen WLAN (z.B. Hof-WLAN) verbind
 | Mikrocontroller | [ESP32-WROOM-32U](https://www.amazon.de/dp/B0F65KPWYR) | Mit U.FL Antennenanschluss |
 | Antenne | 2.4GHz extern | Im ESP32-Set enthalten |
 | RS232 Wandler | MAX3232CPE | DIP-16, 5x 1µF Kondensatoren |
-| Spannungsregler | 7805 | 12V → 5V Linearregler (TO-220, ggf. mit kleinem Kühlkörper) |
+| Spannungsregler | K7805M | 12V → 5V Schaltregler (pin-kompatibel zu 7805, kein Kühlkörper nötig) |
 | Verpolschutz | 1N5822 | Schottky-Diode |
 | Überspannungsschutz | 1.5KE18A | TVS-Diode 18V |
 | WI-NET Stecker | Binder M16 5-pol | Bestellnr. 09 0313 00 05 |

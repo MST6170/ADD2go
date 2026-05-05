@@ -47,6 +47,7 @@ TODO.txt
 *_autosave-*
 ~*.lck
 fp-info-cache
+*.kicad_prl
 
 # Archive (wenn die Quell-Dateien da sind, brauchen wir die Archive nicht)
 *.zip

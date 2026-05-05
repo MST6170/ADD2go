@@ -1,8 +1,10 @@
 # ADD2go
 
-**Wireless Waagen-Display für Dinamica Generale ADD2 / Siloking Mischwagen**
+**Wireless Fernanzeige für Dinamica Generale ADD2 / Siloking Mischwagen**
 
 Überträgt Gewichtsdaten kabellos von der Mischwagen-Waage zum Radlader-Display oder Smartphone.
+
+ADD2go ist in erster Linie eine **Fernanzeige** für die ADD2 Waage. Zusätzlich integriert ist eine **Schaufel-Wiegung** mit Drucksensor — fand ich nützlich, daher ist sie mit reingewandert.
 
 ![ADD2go](images/hero.jpg)
 
@@ -44,45 +46,6 @@ ADD2go besteht aus zwei ESP32-Modulen und einer optionalen WebApp:
 - ✅ ADS1115-Watchdog (Sensor-Ausfall wird erkannt)
 - ✅ Auto-Reconnect bei WiFi-Verlust
 - ✅ Hardware Watchdog
-
----
-
-## 📱 WebApp
-
-Der Sender bietet eine eingebaute WebApp - das Gewicht direkt auf dem Smartphone anzeigen.
-
-<p align="center">
-  <img src="images/webapp.png" width="320" alt="WebApp am Smartphone">
-  <br>
-  <em>WebApp im Browser am Smartphone</em>
-</p>
-
-### Zugriff
-
-| Methode | URL | Wann nutzen |
-|---------|-----|-------------|
-| Direkt | `http://192.168.4.1` | Handy mit "ADD2go" WLAN verbunden |
-| Heimnetz | `http://add2go.local` | Handy im Hof-WLAN (nach Setup) |
-| Heimnetz | `http://[IP-Adresse]` | Falls mDNS nicht funktioniert |
-
-### Funktionen
-
-| Element | Beschreibung |
-|---------|--------------|
-| **Gewichtsanzeige** | Groß und zentral, mit "kg" Einheit |
-| **TOTAL** | Zeigt Gesamtgewicht von der Waage |
-| **ZERO** | Speichert aktuelles Gewicht, zeigt Differenz |
-| **Signalstärke** | 📶▂▄▆█ (4 Stufen) |
-| **Status** | 🟢 Verbunden / 🟠 Waage aus / 🔴 Offline |
-
-Die WebApp funktioniert parallel zum Hardware-Empfänger - beide können gleichzeitig genutzt werden.
-
-### TOTAL / ZERO Funktion
-
-- **TOTAL**: Normaler Modus - zeigt das Gewicht wie es von der Waage kommt
-- **ZERO**: Drücken um aktuelles Gewicht als Nullpunkt zu setzen. Danach wird die Differenz angezeigt. Praktisch zum Wiegen von Zuladungen.
-
-Der aktive Modus ist **orange** markiert. Diese Funktion läuft lokal in der WebApp und beeinflusst nicht die ADD2 Waage selbst.
 
 ---
 
@@ -153,9 +116,10 @@ Der Sender kann sich zusätzlich mit einem externen WLAN (z.B. Hof-WLAN) verbind
 |------------|-----|-----------|
 | Mikrocontroller | [ESP32-WROOM-32U](https://www.amazon.de/dp/B0F65KPWYR) | Mit U.FL Antennenanschluss |
 | Antenne | 2.4GHz extern | Im ESP32-Set enthalten |
-| Display | ILI9341 3.2" TFT | 320x240, SPI, mit Touch |
+| Display | [ILI9341 3.2" TFT](https://de.aliexpress.com/item/1005003005216533.html) | 320x240, SPI, mit Touch |
 | Touch | XPT2046 | Resistiv, im Display integriert |
 | ADC | ADS1115 | 16-bit, I²C (für Schaufel-Wiegung) |
+| Drucksensor | [XIDIBEI 0-300 bar](https://de.aliexpress.com/item/4001002862246.html) | 9-36V Versorgung, 0.5-4.5V Ausgang (für Schaufel-Wiegung, optional) |
 | Reed-Kontakt | Digital | Wiegeposition erkennen (optional) |
 
 **Pinbelegung Empfänger:**
@@ -174,6 +138,9 @@ Der Sender kann sich zusätzlich mit einem externen WLAN (z.B. Hof-WLAN) verbind
 | GPIO22 | I²C SCL (ADS1115) |
 | GPIO36 | Reed-Kontakt (LOW = Wiegeposition) |
 
+![XIDIBEI Drucksensor](images/drucksensor.jpg)
+*XIDIBEI Drucksensor (0–300 bar, 9–36 V → 0,5–4,5 V) — Quelle für die Schaufel-Wiegung*
+
 ### WI-NET Stecker (ADD2 Waage)
 
 Der WI-NET Anschluss ist ein 5-poliger M16 Stecker an der ADD2 Waage.
@@ -182,21 +149,9 @@ Der WI-NET Anschluss ist ein 5-poliger M16 Stecker an der ADD2 Waage.
 - Bestellnummer: **09 0313 00 05**
 - Lötkontakte, 3.0-6.0mm Kabeldurchlass
 
-Die Pinbelegung wurde durch eigene Messungen ermittelt:
+> 💡 **Hinweis:** Bei diesem Stecker bin ich mir nicht 100% sicher — er passt nicht ganz exakt in die Buchse, funktioniert aber zuverlässig.
 
-```
-      Blick auf die Buchse (Waage)
-      
-             ┌───┐
-            ╱  3  ╲         3 = TX (Daten)
-           │       │
-          4│       │2       2 = GND
-           │       │        4 = n.c.
-            ╲  5 1 ╱        5 = n.c.
-             └─┬─┘          1 = +12V
-               │
-           (Kodierung)
-```
+Die Pinbelegung wurde durch eigene Messungen ermittelt:
 
 | Pin | Position | Funktion | Verbindung |
 |-----|----------|----------|------------|
@@ -207,7 +162,7 @@ Die Pinbelegung wurde durch eigene Messungen ermittelt:
 | 5 | links unten | - | nicht belegt |
 
 ![WI-NET Stecker](images/winet_pinout.png)
-*WI-NET Stecker (Binder M16, 5-polig) — eigene Messungen am Steckgesicht*
+*WI-NET Stecker (Binder M16, 5-polig) — eigene Messung der Pinbelegung*
 
 > ⚠️ **Wichtig:** Pinbelegung von Steckgesicht (Buchse an der Waage) aus gesehen!
 
@@ -332,7 +287,7 @@ Wenn 3 Sekunden lang keine gültigen RS232-Daten empfangen werden, gilt die Waag
 
 ### Voraussetzungen
 
-- Arduino IDE 1.8.19 oder neuer
+- Arduino IDE 1.8.19
 - ESP32 Board Package (v3.x empfohlen)
 - USB-Treiber für ESP32 (CP2102 oder CH340)
 
@@ -438,9 +393,42 @@ Baudrate:  115200
 
 **Sensor-Ausfall:** Wenn der ADS1115 nicht antwortet (z.B. Kabelbruch, Wackelkontakt), zeigt der Schaufel-Button `SENSOR-FEHLER` in rot an. TARA und KALIBRIEREN sind dann gesperrt.
 
-### WebApp (Smartphone)
+---
 
-Die WebApp zeigt dieselben Informationen wie das Hardware-Display, plus Signalstärke. TOTAL/ZERO funktionieren wie am Hardware-Display.
+## 📱 WebApp
+
+Der Sender bietet eine eingebaute WebApp - das Gewicht direkt auf dem Smartphone anzeigen. Sie funktioniert parallel zum Hardware-Empfänger und ist als Nebenfunktion gedacht.
+
+<p align="center">
+  <img src="images/webapp.png" width="320" alt="WebApp am Smartphone">
+  <br>
+  <em>WebApp im Browser am Smartphone</em>
+</p>
+
+### Zugriff
+
+| Methode | URL | Wann nutzen |
+|---------|-----|-------------|
+| Direkt | `http://192.168.4.1` | Handy mit "ADD2go" WLAN verbunden |
+| Heimnetz | `http://add2go.local` | Handy im Hof-WLAN (nach Setup) |
+| Heimnetz | `http://[IP-Adresse]` | Falls mDNS nicht funktioniert |
+
+### Funktionen
+
+| Element | Beschreibung |
+|---------|--------------|
+| **Gewichtsanzeige** | Groß und zentral, mit "kg" Einheit |
+| **TOTAL** | Zeigt Gesamtgewicht von der Waage |
+| **ZERO** | Speichert aktuelles Gewicht, zeigt Differenz |
+| **Signalstärke** | 📶▂▄▆█ (4 Stufen) |
+| **Status** | 🟢 Verbunden / 🟠 Waage aus / 🔴 Offline |
+
+### TOTAL / ZERO Funktion
+
+- **TOTAL**: Normaler Modus - zeigt das Gewicht wie es von der Waage kommt
+- **ZERO**: Drücken um aktuelles Gewicht als Nullpunkt zu setzen. Danach wird die Differenz angezeigt. Praktisch zum Wiegen von Zuladungen.
+
+Der aktive Modus ist **orange** markiert. Diese Funktion läuft lokal in der WebApp und beeinflusst nicht die ADD2 Waage selbst.
 
 ---
 

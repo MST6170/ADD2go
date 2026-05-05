@@ -52,3 +52,6 @@ fp-info-cache
 *.zip
 *.7z
 *.rar
+
+# Claude Code (lokale Tool-Konfiguration)
+.claude/

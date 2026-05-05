@@ -4,6 +4,8 @@
 
 Überträgt Gewichtsdaten kabellos von der Mischwagen-Waage zum Radlader-Display oder Smartphone.
 
+![ADD2go](images/hero.jpg)
+
 ![Version Sender](https://img.shields.io/badge/Sender-v1.2.4-green)
 ![Version Empfänger](https://img.shields.io/badge/Empfänger-v1.0.1-blue)
 ![Platform](https://img.shields.io/badge/Platform-ESP32-blue)
@@ -48,6 +50,12 @@ ADD2go besteht aus zwei ESP32-Modulen und einer optionalen WebApp:
 ## 📱 WebApp
 
 Der Sender bietet eine eingebaute WebApp - das Gewicht direkt auf dem Smartphone anzeigen.
+
+<p align="center">
+  <img src="images/webapp.png" width="320" alt="WebApp am Smartphone">
+  <br>
+  <em>WebApp im Browser am Smartphone</em>
+</p>
 
 ### Zugriff
 
@@ -111,6 +119,9 @@ Der Sender kann sich zusätzlich mit einem externen WLAN (z.B. Hof-WLAN) verbind
 
 ### Sender (Mischwagen)
 
+![Sender-Modul](images/sender_hardware.jpg)
+*Sender-Modul: ESP32, MAX3232 (RS232) und 7805-Spannungsregler*
+
 | Komponente | Typ | Bemerkung |
 |------------|-----|-----------|
 | Mikrocontroller | [ESP32-WROOM-32U](https://www.amazon.de/dp/B0F65KPWYR) | Mit U.FL Antennenanschluss |
@@ -130,7 +141,13 @@ Der Sender kann sich zusätzlich mit einem externen WLAN (z.B. Hof-WLAN) verbind
 | 5V | Versorgung vom Spannungsregler |
 | GND | Gemeinsame Masse |
 
+![ESP32 Pinout](images/ESP32_pinout.PNG)
+*ESP32-WROOM-32 Pinbelegung (Referenz)*
+
 ### Empfänger (Radlader)
+
+![Empfänger-Modul](images/empfaenger_hardware.jpg)
+*Empfänger-Modul: ESP32, ILI9341 Display mit Touch und ADS1115 ADC*
 
 | Komponente | Typ | Bemerkung |
 |------------|-----|-----------|
@@ -188,6 +205,9 @@ Die Pinbelegung wurde durch eigene Messungen ermittelt:
 | 3 | oben mitte | TX | → MAX3232 R1IN (Pin 13) |
 | 4 | links oben | - | nicht belegt |
 | 5 | links unten | - | nicht belegt |
+
+![WI-NET Stecker](images/winet_pinout.png)
+*WI-NET Stecker (Binder M16, 5-polig) — eigene Messungen am Steckgesicht*
 
 > ⚠️ **Wichtig:** Pinbelegung von Steckgesicht (Buchse an der Waage) aus gesehen!
 
@@ -379,6 +399,9 @@ Baudrate:  115200
 
 ### Hardware-Display (Empfänger)
 
+![Display Hauptansicht](images/display_hauptansicht.jpg)
+*Hauptansicht mit Gewichtszahl und TOTAL/ZERO-Buttons*
+
 **Anzeigen:**
 
 | Anzeige | Farbe | Bedeutung |
@@ -400,6 +423,9 @@ Baudrate:  115200
 > 💡 **Hinweis:** ZERO wird automatisch zurückgesetzt wenn die Verbindung zum Sender verloren geht oder die Waage auf OFF wechselt. So gibt es nach Wiedereinschalten keinen falschen Offset.
 
 **Schaufel-Wiegung Menü:**
+
+![Schaufel-Wiegung Menü](images/display_menu.jpg)
+*Setup-Menü für die Schaufel-Wiegung*
 
 | Menüpunkt | Funktion |
 |-----------|----------|

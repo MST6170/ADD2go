@@ -94,6 +94,7 @@ Der Sender kann sich zusätzlich mit einem externen WLAN (z.B. Hof-WLAN) verbind
 | Verpolschutz | 1N5822 | Schottky-Diode |
 | Überspannungsschutz | 1.5KE18A | TVS-Diode 18V |
 | WI-NET Stecker | Binder M16 5-pol | Bestellnr. 09 0313 00 05 |
+| Gehäuse | [Industrie-Gehäuse 100×68×50 mm](https://de.aliexpress.com/item/1005005622148025.html) | gekauft (kein 3D-Druck nötig) |
 
 **Pinbelegung Sender:**
 
@@ -121,6 +122,7 @@ Der Sender kann sich zusätzlich mit einem externen WLAN (z.B. Hof-WLAN) verbind
 | ADC | ADS1115 | 16-bit, I²C (für Schaufel-Wiegung) |
 | Drucksensor | [XIDIBEI 0-300 bar](https://de.aliexpress.com/item/4001002862246.html) | 9-36V Versorgung, 0.5-4.5V Ausgang (für Schaufel-Wiegung, optional) |
 | Reed-Kontakt | Digital | Wiegeposition erkennen (optional) |
+| Gehäuse | 3D-gedruckt | STL-Dateien im Ordner [`case/`](case/) (Box, Deckel, Anschraubplatte, Kugelgelenk) |
 
 **Pinbelegung Empfänger:**
 
@@ -523,8 +525,11 @@ ADD2go/
 │   └── add2go_sender_v1_2_4_1.ino       # Sender Firmware
 ├── add2go_empfaenger_v1_0_1/
 │   └── add2go_empfaenger_v1_0_1.ino     # Empfänger Firmware
-├── images/
-│   └── winet_pinout.png                  # WI-NET Stecker Pinbelegung
+├── add2go_pcb/                           # KiCad-Projekt für die Sender-Platine
+├── case/                                 # 3D-Druck-STLs für Empfänger-Gehäuse
+├── images/                               # Bilder & Pinout-Diagramme
+├── User_Setup.h                          # TFT_eSPI-Vorlage (in Library kopieren)
+├── CLAUDE.md                             # Kurzdoku für KI-Assistenten
 ├── README.md                             # Diese Dokumentation
 ├── LICENSE                               # CC BY-NC-SA 4.0
 └── .gitignore                            # Git Ignore-Liste

@@ -97,8 +97,12 @@ ADD2go/
 ├── add2go_sender_v1_2_4_1/      # Sender-Sketch (Arduino-Ordner)
 ├── add2go_empfaenger_v1_0_1/    # Empfänger-Sketch (Arduino-Ordner)
 ├── add2go_pcb/                  # KiCad-Projekt für die Sender-Platine
+├── case/                        # 3D-Druck-STLs für Empfänger-Gehäuse
 ├── images/                      # Pinout-Bilder & Foto-Doku
 ├── User_Setup.h                 # Vorlage für TFT_eSPI (in Library kopieren)
 ├── README.md                    # Ausführliche Doku
 └── LICENSE                      # CC BY-NC-SA 4.0
 ```
+
+Sender-Gehäuse ist gekauft (Industrie-Gehäuse 100×68×50 mm, Link in der README).
+Nur das Empfänger-Gehäuse ist 3D-gedruckt.

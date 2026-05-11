@@ -56,3 +56,14 @@ fp-info-cache
 
 # Claude Code (lokale Tool-Konfiguration)
 .claude/
+
+# PlatformIO build artifacts unter add2go_empfaenger_pio
+add2go_empfaenger_pio/.pio/
+add2go_empfaenger_pio/.pioenvs/
+add2go_empfaenger_pio/.piolibdeps/
+
+# Re-Include .claude/ im PIO-Unterordner (Auto-Push-Hook + settings.json sollen getrackt sein)
+!add2go_empfaenger_pio/.claude/
+add2go_empfaenger_pio/.claude/settings.local.json
+add2go_empfaenger_pio/.claude/last-build.log
+add2go_empfaenger_pio/.claude/last-push.log

@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
+#include <math.h>
 
 static TFT_eSPI tft = TFT_eSPI();
 
@@ -376,13 +377,15 @@ void zeichneFlowConfirmModal() {
 
 static void drawFlowPresetBtn(int x, int y, int w, int h, uint16_t liter,
                               uint8_t presetIdx, bool active, bool enabled) {
+    (void)presetIdx;
     uint16_t bg = enabled ? (active ? TFT_ORANGE : TFT_DARKGREY) : TFT_DARKGREY;
     uint16_t fg = enabled ? (active ? TFT_BLACK  : TFT_WHITE)    : TFT_DARKGREY;
     tft.fillRoundRect(x, y, w, h, 6, bg);
     tft.drawRoundRect(x, y, w, h, 6, TFT_WHITE);
 
-    char buf[10];
-    snprintf(buf, sizeof(buf), "%u L", (unsigned)liter);
+    // Nur die Zahl ohne "L" — passt sicher in 70 px breite Buttons.
+    char buf[8];
+    snprintf(buf, sizeof(buf), "%u", (unsigned)liter);
     tft.setTextColor(fg);
     tft.setTextDatum(MC_DATUM);
     tft.setFreeFont(&FreeSansBold12pt7b);
@@ -391,54 +394,70 @@ static void drawFlowPresetBtn(int x, int y, int w, int h, uint16_t liter,
     tft.setTextDatum(TL_DATUM);
 }
 
-void zeichneFlowTab() {
-    auto snap = flow::snapshot();
-    bool connected = flow::wsConnected();
-    bool grayed = !connected;
-    uint16_t mainTxt = grayed ? TFT_DARKGREY : TFT_WHITE;
+// State-Tracking fuer Flow-Tab partial-redraw. Werte werden bei
+// zeichneFlowTab() auf "ungueltig" zurueckgesetzt damit der naechste
+// updateFlowTab()-Call alles neu zeichnet.
+static uint16_t        s_lastFlowDone       = 0xFFFF;
+static uint16_t        s_lastFlowTarget     = 0xFFFF;
+static float           s_lastFlowLpm        = -1.0f;
+static flow::FlowState s_lastFlowState      = flow::FS_UNKNOWN;
+static uint8_t         s_lastFlowActivePr   = 0xFF;
+static uint16_t        s_lastFlowP1         = 0xFFFF;
+static uint16_t        s_lastFlowP2         = 0xFFFF;
+static uint16_t        s_lastFlowP3         = 0xFFFF;
+static bool            s_lastFlowConnected  = false;
 
-    // Liter gross zentriert: "doneL / targetL"
-    char liters[24];
-    snprintf(liters, sizeof(liters), "%u / %u L", (unsigned)snap.doneL, (unsigned)snap.targetL);
-    tft.setTextColor(mainTxt);
+static void drawFlowLiters(uint16_t done, uint16_t target, bool connected) {
+    tft.fillRect(0, 50, 320, 50, TFT_BLACK);
+    char buf[20];
+    snprintf(buf, sizeof(buf), "%u / %u", (unsigned)done, (unsigned)target);
+    tft.setTextColor(connected ? TFT_WHITE : TFT_DARKGREY);
     tft.setTextDatum(MC_DATUM);
     tft.setFreeFont(&FreeSansBold24pt7b);
-    tft.drawString(liters, 160, 75);
+    tft.drawString(buf, 160, 75);
+    tft.setFreeFont(NULL);
+    tft.setTextDatum(TL_DATUM);
+}
 
-    // L/min klein
-    char lpm[20];
-    snprintf(lpm, sizeof(lpm), "%.1f L/min", snap.lpm);
+static void drawFlowLpm(float lpm, bool connected) {
+    tft.fillRect(0, 108, 320, 22, TFT_BLACK);
+    char buf[18];
+    snprintf(buf, sizeof(buf), "%.1f L/min", lpm);
+    tft.setTextColor(connected ? TFT_LIGHTGREY : TFT_DARKGREY);
+    tft.setTextDatum(MC_DATUM);
     tft.setFreeFont(&FreeSans9pt7b);
-    tft.setTextColor(grayed ? TFT_DARKGREY : TFT_LIGHTGREY);
-    tft.drawString(lpm, 160, 120);
+    tft.drawString(buf, 160, 120);
+    tft.setFreeFont(NULL);
+    tft.setTextDatum(TL_DATUM);
+}
 
-    // State-Badge (Pille)
-    uint16_t badgeBg = grayed ? TFT_DARKGREY : stateBadgeColor(snap.state);
-    uint16_t badgeFg = grayed ? TFT_DARKERGREY : TFT_BLACK;
-    int badgeW = 130;
-    int badgeX = (320 - badgeW) / 2;
-    tft.fillRoundRect(badgeX, 138, badgeW, 22, 10, badgeBg);
-    tft.setTextColor(badgeFg);
+static void drawFlowBadge(flow::FlowState s, bool connected) {
+    constexpr int badgeW = 130;
+    const int badgeX = (320 - badgeW) / 2;
+    tft.fillRect(0, 132, 320, 35, TFT_BLACK);
+    uint16_t bg = connected ? stateBadgeColor(s) : TFT_DARKGREY;
+    uint16_t fg = connected ? TFT_BLACK : TFT_DARKERGREY;
+    tft.fillRoundRect(badgeX, 138, badgeW, 22, 10, bg);
+    tft.setTextColor(fg);
+    tft.setTextDatum(MC_DATUM);
     tft.setFreeFont(&FreeSansBold9pt7b);
-    tft.drawString(stateBadgeText(snap.state), 160, 149);
-
-    // "Verbindung verloren"-Hinweis bei Greying
-    if (grayed) {
+    tft.drawString(stateBadgeText(s), 160, 149);
+    if (!connected) {
         tft.setFreeFont(NULL);
         tft.setTextColor(TFT_RED);
         tft.drawString("Verbindung verloren", 160, 168);
     }
     tft.setFreeFont(NULL);
     tft.setTextDatum(TL_DATUM);
+}
 
-    // Buttons: 3 Preset + STOP, y=180..230
-    bool btnsEnabled = connected;
-    drawFlowPresetBtn( 10, 180,  70, 50, snap.p1, 1, snap.preset == 1, btnsEnabled);
-    drawFlowPresetBtn( 85, 180,  70, 50, snap.p2, 2, snap.preset == 2, btnsEnabled);
-    drawFlowPresetBtn(160, 180,  70, 50, snap.p3, 3, snap.preset == 3, btnsEnabled);
+static void drawFlowButtons(const flow::Snapshot& snap, bool connected) {
+    tft.fillRect(0, 175, 320, 60, TFT_BLACK);
+    drawFlowPresetBtn( 10, 180,  70, 50, snap.p1, 1, snap.preset == 1, connected);
+    drawFlowPresetBtn( 85, 180,  70, 50, snap.p2, 2, snap.preset == 2, connected);
+    drawFlowPresetBtn(160, 180,  70, 50, snap.p3, 3, snap.preset == 3, connected);
 
-    // STOP-Button rot
-    uint16_t stopBg = btnsEnabled ? TFT_RED : TFT_DARKGREY;
+    uint16_t stopBg = connected ? TFT_RED : TFT_DARKGREY;
     tft.fillRoundRect(235, 180, 75, 50, 6, stopBg);
     tft.drawRoundRect(235, 180, 75, 50, 6, TFT_WHITE);
     tft.setTextColor(TFT_WHITE);
@@ -447,6 +466,74 @@ void zeichneFlowTab() {
     tft.drawString("STOP", 272, 205);
     tft.setFreeFont(NULL);
     tft.setTextDatum(TL_DATUM);
+}
+
+// Wird bei Full-Redraw (Tab-Wechsel) aufgerufen. Reset Tracking-Vars
+// damit updateHauptbildschirm() im naechsten Tick alles neu zeichnet.
+void zeichneFlowTab() {
+    auto snap = flow::snapshot();
+    bool connected = flow::wsConnected();
+
+    drawFlowLiters(snap.doneL, snap.targetL, connected);
+    drawFlowLpm(snap.lpm, connected);
+    drawFlowBadge(snap.state, connected);
+    drawFlowButtons(snap, connected);
+
+    s_lastFlowDone      = snap.doneL;
+    s_lastFlowTarget    = snap.targetL;
+    s_lastFlowLpm       = snap.lpm;
+    s_lastFlowState     = snap.state;
+    s_lastFlowActivePr  = snap.preset;
+    s_lastFlowP1        = snap.p1;
+    s_lastFlowP2        = snap.p2;
+    s_lastFlowP3        = snap.p3;
+    s_lastFlowConnected = connected;
+}
+
+// Partial redraw — nur was sich geaendert hat. Verhindert 10 Hz Flicker.
+static void updateFlowTab() {
+    auto snap = flow::snapshot();
+    bool connected = flow::wsConnected();
+
+    // Connection-Toggle -> Full redraw aller Felder mit neuer Farbgebung.
+    if (connected != s_lastFlowConnected) {
+        drawFlowLiters(snap.doneL, snap.targetL, connected);
+        drawFlowLpm(snap.lpm, connected);
+        drawFlowBadge(snap.state, connected);
+        drawFlowButtons(snap, connected);
+        s_lastFlowConnected = connected;
+        s_lastFlowDone = snap.doneL; s_lastFlowTarget = snap.targetL;
+        s_lastFlowLpm = snap.lpm; s_lastFlowState = snap.state;
+        s_lastFlowActivePr = snap.preset;
+        s_lastFlowP1 = snap.p1; s_lastFlowP2 = snap.p2; s_lastFlowP3 = snap.p3;
+        return;
+    }
+
+    if (snap.doneL != s_lastFlowDone || snap.targetL != s_lastFlowTarget) {
+        drawFlowLiters(snap.doneL, snap.targetL, connected);
+        s_lastFlowDone = snap.doneL;
+        s_lastFlowTarget = snap.targetL;
+    }
+
+    // L/min: Threshold 0.05 verhindert Update bei winzigem Float-Jitter.
+    if (fabsf(snap.lpm - s_lastFlowLpm) > 0.05f) {
+        drawFlowLpm(snap.lpm, connected);
+        s_lastFlowLpm = snap.lpm;
+    }
+
+    if (snap.state != s_lastFlowState) {
+        drawFlowBadge(snap.state, connected);
+        s_lastFlowState = snap.state;
+    }
+
+    if (snap.preset != s_lastFlowActivePr ||
+        snap.p1 != s_lastFlowP1 || snap.p2 != s_lastFlowP2 || snap.p3 != s_lastFlowP3) {
+        drawFlowButtons(snap, connected);
+        s_lastFlowActivePr = snap.preset;
+        s_lastFlowP1 = snap.p1;
+        s_lastFlowP2 = snap.p2;
+        s_lastFlowP3 = snap.p3;
+    }
 }
 
 void zeichneHauptbildschirm() {
@@ -491,11 +578,9 @@ void updateHauptbildschirm() {
     if (currentTab == TAB_FLOW) {
         if (flow::pendingConfirmPreset() > 0) return;
         if (flow::staSwitchInProgress() || flow::staSwitchTimedOut()) return;
-        // Mid-content-Bereich neu zeichnen — fillRect ueber Liter + L/min + State-Badge,
-        // dann Texte/Buttons. Tab-Switch + Header bleiben unberuehrt.
-        tft.fillRect(0, 40, 320, 140, TFT_BLACK);
-        zeichneFlowTab();
-        zeichneTabSwitchButton();
+        // Selective redraw — vermeidet 10 Hz Flicker. Tab-Switch bleibt unberuehrt
+        // (wird nur bei full-redraw / Modal-Exit neu gezeichnet).
+        updateFlowTab();
         return;
     }
 

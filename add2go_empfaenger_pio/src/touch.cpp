@@ -3,13 +3,16 @@
 #include "state.h"
 #include "storage.h"
 #include "scale.h"
+#include "network.h"
+#include "flow_tab.h"
 #include <Arduino.h>
 #include <SPI.h>
 #include <XPT2046_Touchscreen.h>
 
 static XPT2046_Touchscreen ts(TOUCH_CS_PIN, TOUCH_IRQ);
 
-// Layout-Konstanten 1:1 aus Sketch
+// Layout-Konstanten — 1:1 wie v1.0.2 (kein Y-Shift, nur Tab-Switch-Button rechts oben).
+// Muss synchron zu display.cpp bleiben.
 static constexpr int SCHAUFEL_BTN_X = 5;
 static constexpr int SCHAUFEL_BTN_Y = 5;
 static constexpr int SCHAUFEL_BTN_W = 220;
@@ -20,6 +23,11 @@ static constexpr int BTN2_X = 170;
 static constexpr int BTN2_Y = 180;
 static constexpr int BTN_W  = 130;
 static constexpr int BTN_H  = 50;
+// Tab-Switch-Button (Toggle Schaufel <-> Flow)
+static constexpr int TAB_SWITCH_X = 283;
+static constexpr int TAB_SWITCH_Y = 30;
+static constexpr int TAB_SWITCH_W = 35;
+static constexpr int TAB_SWITCH_H = 35;
 
 static void handleTouchHauptbildschirm(int tx, int ty);
 static void handleTouchSchaufelMenu(int tx, int ty);
@@ -60,6 +68,30 @@ void handle() {
 // ---- Touch-Handler 1:1 aus Sketch ----
 
 static void handleTouchHauptbildschirm(int tx, int ty) {
+    // Tab-Switch-Button (rechts oben) zuerst — toggelt Schaufel <-> Flow.
+    // Mit onTabEnter/onTabExit-Hooks + STA-Reconnect via network::onTabChanged.
+    if (tx >= TAB_SWITCH_X && tx <= TAB_SWITCH_X + TAB_SWITCH_W &&
+        ty >= TAB_SWITCH_Y && ty <= TAB_SWITCH_Y + TAB_SWITCH_H) {
+        if (currentTab == TAB_SCHAUFEL) {
+            currentTab = TAB_FLOW;
+            flow::onTabEnter();
+        } else {
+            flow::onTabExit();
+            currentTab = TAB_SCHAUFEL;
+        }
+        network::onTabChanged();
+        Serial.printf(">>> Tab-Switch -> %s\n",
+                      currentTab == TAB_SCHAUFEL ? "Schaufel" : "Flow");
+        displayNeedsFullRedraw = true;
+        return;
+    }
+
+    // Im Flow-Tab: Touch an flow_tab weiterleiten (Confirm-Modal / Preset / STOP)
+    if (currentTab == TAB_FLOW) {
+        flow::handleTouch(tx, ty);
+        return;
+    }
+
     if (tx >= SCHAUFEL_BTN_X && tx <= SCHAUFEL_BTN_X + SCHAUFEL_BTN_W &&
         ty >= SCHAUFEL_BTN_Y && ty <= SCHAUFEL_BTN_Y + SCHAUFEL_BTN_H) {
         Serial.println(">>> Schaufel-Button gedrueckt");

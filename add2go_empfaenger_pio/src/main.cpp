@@ -9,6 +9,7 @@
 #include "display.h"
 #include "touch.h"
 #include "ui.h"
+#include "flow_tab.h"
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_task_wdt.h>
@@ -65,6 +66,9 @@ void setup() {
     display::bootProgress(20, "Display OK");
     display::bootProgress(40, "Touch OK");
 
+    // 4b. Flow-Tab Module initialisieren (kein WS-Connect, nur Vorbereitung)
+    flow::begin();
+
     // 5. Watchdog initialisieren (VOR WiFi-Connect)
     setupWatchdog();
     display::bootProgress(60, "Watchdog OK");
@@ -96,11 +100,16 @@ void loop() {
     // 3. UDP empfangen
     network::handleUDP();
 
-    // 4. ADC lesen (10 Hz)
-    scale::handleADC();
+    // 4. ADC lesen (10 Hz) — nur im Schaufel-Tab relevant, hardware-mit verbunden
+    if (currentTab == TAB_SCHAUFEL) {
+        scale::handleADC();
+    }
 
     // 4b. RSSI (1 Hz)
     network::handleRSSI();
+
+    // 4c. Flow-Tab WS-Client (nur aktiv wenn currentTab == TAB_FLOW)
+    flow::loop();
 
     // 5. Touch verarbeiten
     touch::handle();

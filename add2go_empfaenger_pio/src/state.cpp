@@ -40,6 +40,9 @@ int   filterAnzahl           = FILTER_ANZAHL_DEFAULT;
 int   filterSchwelle         = FILTER_SCHWELLE_DEFAULT;
 int   letzteAngezeigtesGewicht = 0;
 
+// ---- Tabs ----
+Tab currentTab = TAB_SCHAUFEL;
+
 // ---- Menü ----
 MenuState menuState           = MENU_NONE;
 int       kalibierGewicht     = 100;

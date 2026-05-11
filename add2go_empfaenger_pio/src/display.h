@@ -18,11 +18,19 @@ void updateHauptbildschirm();       // Partial-Redraw fuer Hauptbildschirm
 
 // Hauptbildschirm-Elemente
 void zeichneHauptbildschirm();
+void zeichneTabSwitchButton();
 void zeichneSchaufelButton();
 void zeichneWiFiStatus();
 void zeichneSignalBars(int activeBars);
 void zeichneAdd2Gewicht();
 void zeichneButton(int x, int y, const char* text, bool aktiv, bool enabled);
+void zeichneFlowTabPlaceholder();  // legacy, unused after Schritt 5
+
+// Phase 3c Schritt 5
+void zeichneFlowTab();             // Wird vom Hauptbildschirm gerufen wenn currentTab==TAB_FLOW
+void zeichneFlowConfirmModal();    // Overlay vor START
+void zeichneFlowFallback();        // STA-Timeout-Screen
+void zeichneFlowSpinner();         // Waehrend STA-Switch laeuft
 
 // Menue-Renders
 void zeichneSchaufelMenu();

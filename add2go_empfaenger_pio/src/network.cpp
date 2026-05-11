@@ -20,13 +20,20 @@ void resetZero() {
     }
 }
 
+// Phase 3c: SSID haengt vom aktiven Tab ab — Schaufel-Tab → ADD2go (UDP-Sender),
+// Flow-Tab → add2flow (WebSocket-Server).
+static const char* activeSsid() {
+    return (currentTab == TAB_FLOW) ? WIFI_AP_ADD2FLOW : WIFI_AP_ADD2GO;
+}
+
 void verbindeWiFi() {
+    const char* ssid = activeSsid();
     Serial.print("Verbinde mit ");
-    Serial.print(WIFI_AP_ADD2GO);
+    Serial.print(ssid);
     Serial.print("...");
 
     WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_AP_ADD2GO);
+    WiFi.begin(ssid);
 
     int versuche = 0;
     while (WiFi.status() != WL_CONNECTED && versuche < 10) {
@@ -40,8 +47,10 @@ void verbindeWiFi() {
     if (WiFi.status() == WL_CONNECTED) {
         Serial.print("[OK] Verbunden! IP: ");
         Serial.println(WiFi.localIP());
-        udp.stop();
-        udp.begin(UDP_PORT_ADD2GO);
+        if (currentTab == TAB_SCHAUFEL) {
+            udp.stop();
+            udp.begin(UDP_PORT_ADD2GO);
+        }
     } else {
         Serial.println("[FEHLER] Verbindung fehlgeschlagen");
     }
@@ -57,11 +66,14 @@ void handleWiFi() {
             lastReconnect = millis();
             resetZero();
         } else if (millis() - lastReconnect > WIFI_RECONNECT_INTERVAL_MS) {
-            Serial.println("[INFO] Starte Reconnect...");
+            const char* ssid = activeSsid();
+            Serial.print("[INFO] Starte Reconnect zu ");
+            Serial.print(ssid);
+            Serial.println("...");
             wifiStatus = WIFI_SUCHE;
             WiFi.disconnect(true);
             delay(100);
-            WiFi.begin(WIFI_AP_ADD2GO);
+            WiFi.begin(ssid);
             lastReconnect = millis();
         }
     } else {
@@ -69,10 +81,28 @@ void handleWiFi() {
             wifiStatus = WIFI_OK;
             Serial.print("[OK] WiFi verbunden! IP: ");
             Serial.println(WiFi.localIP());
-            udp.stop();
-            udp.begin(UDP_PORT_ADD2GO);
+            // UDP nur im Schaufel-Tab oeffnen — im Flow-Tab macht WS-Client das Routing.
+            if (currentTab == TAB_SCHAUFEL) {
+                udp.stop();
+                udp.begin(UDP_PORT_ADD2GO);
+            } else {
+                udp.stop();
+            }
         }
     }
+}
+
+// Externer Trigger fuer Tab-Wechsel: forciert STA-Reconnect mit der neuen SSID.
+void onTabChanged() {
+    Serial.println("[network] Tab gewechselt — STA disconnect, reconnect mit neuer SSID");
+    udp.stop();
+    WiFi.disconnect(true);
+    wifiStatus = WIFI_SUCHE;
+    lastReconnect = millis() - WIFI_RECONNECT_INTERVAL_MS;  // erlaubt sofortigen Reconnect-Versuch
+    // Add2DatenVorhanden auf false damit Hauptbildschirm-Display nicht alte Schaufel-Daten zeigt
+    add2DatenVorhanden = false;
+    add2WaageOff = false;
+    resetZero();
 }
 
 void handleUDP() {

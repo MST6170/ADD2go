@@ -54,6 +54,13 @@ extern int   filterAnzahl;
 extern int   filterSchwelle;
 extern int   letzteAngezeigtesGewicht;
 
+// ---- Tabs (Phase 3c) ----
+enum Tab {
+    TAB_SCHAUFEL = 0,   // Default beim Boot, klassische v1.0.2-Funktionalitaet
+    TAB_FLOW     = 1    // add2flow-Empfaenger (Schritt 5)
+};
+extern Tab currentTab;
+
 // ---- Menü ----
 enum MenuState {
     MENU_NONE,

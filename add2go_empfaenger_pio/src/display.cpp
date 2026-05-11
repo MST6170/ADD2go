@@ -1,13 +1,15 @@
 #include "display.h"
 #include "config.h"
 #include "state.h"
+#include "flow_tab.h"
 #include <Arduino.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
 
 static TFT_eSPI tft = TFT_eSPI();
 
-// Layout-Konstanten 1:1 aus Sketch Z. 84-97
+// Layout-Konstanten 1:1 wie v1.0.2 — kein Tab-Bar-Shift. Stattdessen
+// rechts-oben ein quadratischer Tab-Switch-Button (siehe TAB_SWITCH_*).
 static constexpr int SCHAUFEL_BTN_X = 5;
 static constexpr int SCHAUFEL_BTN_Y = 5;
 static constexpr int SCHAUFEL_BTN_W = 220;
@@ -15,6 +17,13 @@ static constexpr int SCHAUFEL_BTN_H = 35;
 
 static constexpr int ADD2_Y = 50;
 static constexpr int ADD2_H = 100;
+
+// Quadratischer Tab-Switch-Button rechts oben, unter Signal-Bars (y>27)
+// Zeigt das ZIEL des Switches: Wassertropfen = Wechsel zu Flow, "ADD2" = zurueck.
+static constexpr int TAB_SWITCH_X = 283;
+static constexpr int TAB_SWITCH_Y = 30;
+static constexpr int TAB_SWITCH_W = 35;
+static constexpr int TAB_SWITCH_H = 35;
 
 static constexpr int BTN1_X = 20;
 static constexpr int BTN1_Y = 180;
@@ -223,17 +232,273 @@ void zeichneButton(int x, int y, const char* text, bool aktiv, bool enabled) {
     tft.setFreeFont(NULL);
 }
 
+// Wassertropfen-Symbol (dunkelblau): Spitze oben, runder Bauch unten.
+// Etwas groesser als zuvor (r=6, total-Hoehe 17), mittig im Button-Center
+// (cy zeigt auf Bauch-Center, deshalb das ganze Symbol leicht nach unten shiften).
+static void drawWaterdrop(int cx, int cy, uint16_t color) {
+    constexpr int r = 6;        // Bauch-Radius
+    constexpr int upper = 11;   // Distanz Spitze ueber Bauch-Center
+    int top    = cy - upper;
+    int leftX  = cx - r;
+    int rightX = cx + r;
+    tft.fillTriangle(cx, top, leftX, cy, rightX, cy, color);
+    tft.fillCircle(cx, cy, r, color);
+}
+
+void zeichneTabSwitchButton() {
+    tft.fillRoundRect(TAB_SWITCH_X, TAB_SWITCH_Y, TAB_SWITCH_W, TAB_SWITCH_H, 5, TFT_DARKGREY);
+    tft.drawRoundRect(TAB_SWITCH_X, TAB_SWITCH_Y, TAB_SWITCH_W, TAB_SWITCH_H, 5, TFT_WHITE);
+
+    int cx = TAB_SWITCH_X + TAB_SWITCH_W / 2;
+    int cy = TAB_SWITCH_Y + TAB_SWITCH_H / 2;
+
+    if (currentTab == TAB_SCHAUFEL) {
+        // cy ist Bauch-Center, Spitze geht 11 px hoch + Bauch r=6 nach unten.
+        // Symbol-Vertikal-Mitte = (cy - upper + cy + r) / 2 = cy - (upper - r) / 2.
+        // Damit Symbol-Mitte == Button-Center: dropCy = cy + (upper - r) / 2 = cy + 2.
+        drawWaterdrop(cx, cy + 2, TFT_NAVY);
+    } else {
+        // "ADD" oben, "2" unten, rubinrot, kleine Schrift (Font 2 statt FreeSans9pt)
+        constexpr uint16_t RUBY = 0x9883;
+        tft.setTextColor(RUBY);
+        tft.setTextDatum(MC_DATUM);
+        tft.setTextFont(2);
+        tft.drawString("ADD", cx, cy - 7);
+        tft.drawString("2",   cx, cy + 7);
+        tft.setTextFont(1);
+        tft.setTextDatum(TL_DATUM);
+    }
+}
+
+void zeichneFlowTabPlaceholder() {
+    tft.setTextColor(TFT_LIGHTGREY);
+    tft.setTextDatum(MC_DATUM);
+    tft.setFreeFont(&FreeSans12pt7b);
+    tft.drawString("Flow-Tab", 160, 100);
+    tft.setFreeFont(&FreeSans9pt7b);
+    tft.drawString("folgt in Schritt 5", 160, 130);
+    tft.setFreeFont(NULL);
+    tft.setTextDatum(TL_DATUM);
+}
+
+// ---- Phase 3c Schritt 5: Flow-Tab Rendering ----
+
+static uint16_t stateBadgeColor(flow::FlowState s) {
+    switch (s) {
+        case flow::FS_FILLING:        return TFT_ORANGE;
+        case flow::FS_PAUSED:         return TFT_YELLOW;
+        case flow::FS_DONE:           return TFT_GREEN;
+        case flow::FS_ERROR:          return TFT_RED;
+        case flow::FS_RESUME_PROMPT:  return TFT_BLUE;
+        case flow::FS_IDLE:
+        case flow::FS_SETTINGS:
+        case flow::FS_SETTINGS_ADV:
+        case flow::FS_CALIBRATING:    return TFT_DARKGREY;
+        default:                      return TFT_DARKGREY;
+    }
+}
+
+static const char* stateBadgeText(flow::FlowState s) {
+    switch (s) {
+        case flow::FS_IDLE:           return "BEREIT";
+        case flow::FS_FILLING:        return "BEFUELLT";
+        case flow::FS_PAUSED:         return "PAUSE";
+        case flow::FS_DONE:           return "FERTIG";
+        case flow::FS_ABORTED:        return "ABBRUCH";
+        case flow::FS_ERROR:          return "FEHLER";
+        case flow::FS_RESUME_PROMPT:  return "FORTSETZEN?";
+        case flow::FS_SETTINGS:       return "EINSTELLUNG";
+        case flow::FS_SETTINGS_ADV:   return "EINSTELLUNG";
+        case flow::FS_CALIBRATING:    return "KALIBRIERUNG";
+        default:                      return "...";
+    }
+}
+
+void zeichneFlowSpinner() {
+    tft.setTextColor(TFT_LIGHTGREY);
+    tft.setTextDatum(MC_DATUM);
+    tft.setFreeFont(&FreeSans12pt7b);
+    tft.drawString("Verbinde zu add2flow...", 160, 100);
+    tft.setFreeFont(&FreeSans9pt7b);
+    tft.drawString("(bitte warten)", 160, 135);
+    tft.setFreeFont(NULL);
+    tft.setTextDatum(TL_DATUM);
+}
+
+void zeichneFlowFallback() {
+    tft.setTextColor(TFT_RED);
+    tft.setTextDatum(MC_DATUM);
+    tft.setFreeFont(&FreeSansBold12pt7b);
+    tft.drawString("add2flow nicht erreichbar", 160, 90);
+    tft.setFreeFont(&FreeSans9pt7b);
+    tft.setTextColor(TFT_LIGHTGREY);
+    tft.drawString("Strom + WLAN pruefen", 160, 125);
+    tft.drawString("oder oben rechts ADD2 antippen", 160, 150);
+    tft.setFreeFont(NULL);
+    tft.setTextDatum(TL_DATUM);
+}
+
+void zeichneFlowConfirmModal() {
+    // Vollbild-Overlay (ueberzeichnet alles unter Header — auch den Tab-Switch
+    // ist OK, da Tab-Switch nach Modal wieder gezeichnet wird)
+    tft.fillRect(0, 0, 320, 240, TFT_BLACK);
+
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextDatum(MC_DATUM);
+    tft.setFreeFont(&FreeSansBold18pt7b);
+    tft.drawString("Sind Sie sicher?", 160, 50);
+    tft.setFreeFont(&FreeSansBold12pt7b);
+    tft.setTextColor(TFT_YELLOW);
+    tft.drawString("Tank pruefen!", 160, 90);
+
+    uint8_t pp = flow::pendingConfirmPreset();
+    char line[32];
+    snprintf(line, sizeof(line), "Preset %u starten?", (unsigned)pp);
+    tft.setTextColor(TFT_LIGHTGREY);
+    tft.setFreeFont(&FreeSans12pt7b);
+    tft.drawString(line, 160, 125);
+
+    // Ja-Button gruen links, Abbruch rot rechts
+    tft.fillRoundRect(20, 170, 130, 50, 8, TFT_GREEN);
+    tft.drawRoundRect(20, 170, 130, 50, 8, TFT_WHITE);
+    tft.setTextColor(TFT_BLACK);
+    tft.setFreeFont(&FreeSansBold12pt7b);
+    tft.drawString("Ja, start", 85, 195);
+
+    tft.fillRoundRect(170, 170, 130, 50, 8, TFT_RED);
+    tft.drawRoundRect(170, 170, 130, 50, 8, TFT_WHITE);
+    tft.setTextColor(TFT_WHITE);
+    tft.drawString("Abbruch", 235, 195);
+
+    tft.setFreeFont(NULL);
+    tft.setTextDatum(TL_DATUM);
+}
+
+static void drawFlowPresetBtn(int x, int y, int w, int h, uint16_t liter,
+                              uint8_t presetIdx, bool active, bool enabled) {
+    uint16_t bg = enabled ? (active ? TFT_ORANGE : TFT_DARKGREY) : TFT_DARKGREY;
+    uint16_t fg = enabled ? (active ? TFT_BLACK  : TFT_WHITE)    : TFT_DARKGREY;
+    tft.fillRoundRect(x, y, w, h, 6, bg);
+    tft.drawRoundRect(x, y, w, h, 6, TFT_WHITE);
+
+    char buf[10];
+    snprintf(buf, sizeof(buf), "%u L", (unsigned)liter);
+    tft.setTextColor(fg);
+    tft.setTextDatum(MC_DATUM);
+    tft.setFreeFont(&FreeSansBold12pt7b);
+    tft.drawString(buf, x + w / 2, y + h / 2);
+    tft.setFreeFont(NULL);
+    tft.setTextDatum(TL_DATUM);
+}
+
+void zeichneFlowTab() {
+    auto snap = flow::snapshot();
+    bool connected = flow::wsConnected();
+    bool grayed = !connected;
+    uint16_t mainTxt = grayed ? TFT_DARKGREY : TFT_WHITE;
+
+    // Liter gross zentriert: "doneL / targetL"
+    char liters[24];
+    snprintf(liters, sizeof(liters), "%u / %u L", (unsigned)snap.doneL, (unsigned)snap.targetL);
+    tft.setTextColor(mainTxt);
+    tft.setTextDatum(MC_DATUM);
+    tft.setFreeFont(&FreeSansBold24pt7b);
+    tft.drawString(liters, 160, 75);
+
+    // L/min klein
+    char lpm[20];
+    snprintf(lpm, sizeof(lpm), "%.1f L/min", snap.lpm);
+    tft.setFreeFont(&FreeSans9pt7b);
+    tft.setTextColor(grayed ? TFT_DARKGREY : TFT_LIGHTGREY);
+    tft.drawString(lpm, 160, 120);
+
+    // State-Badge (Pille)
+    uint16_t badgeBg = grayed ? TFT_DARKGREY : stateBadgeColor(snap.state);
+    uint16_t badgeFg = grayed ? TFT_DARKERGREY : TFT_BLACK;
+    int badgeW = 130;
+    int badgeX = (320 - badgeW) / 2;
+    tft.fillRoundRect(badgeX, 138, badgeW, 22, 10, badgeBg);
+    tft.setTextColor(badgeFg);
+    tft.setFreeFont(&FreeSansBold9pt7b);
+    tft.drawString(stateBadgeText(snap.state), 160, 149);
+
+    // "Verbindung verloren"-Hinweis bei Greying
+    if (grayed) {
+        tft.setFreeFont(NULL);
+        tft.setTextColor(TFT_RED);
+        tft.drawString("Verbindung verloren", 160, 168);
+    }
+    tft.setFreeFont(NULL);
+    tft.setTextDatum(TL_DATUM);
+
+    // Buttons: 3 Preset + STOP, y=180..230
+    bool btnsEnabled = connected;
+    drawFlowPresetBtn( 10, 180,  70, 50, snap.p1, 1, snap.preset == 1, btnsEnabled);
+    drawFlowPresetBtn( 85, 180,  70, 50, snap.p2, 2, snap.preset == 2, btnsEnabled);
+    drawFlowPresetBtn(160, 180,  70, 50, snap.p3, 3, snap.preset == 3, btnsEnabled);
+
+    // STOP-Button rot
+    uint16_t stopBg = btnsEnabled ? TFT_RED : TFT_DARKGREY;
+    tft.fillRoundRect(235, 180, 75, 50, 6, stopBg);
+    tft.drawRoundRect(235, 180, 75, 50, 6, TFT_WHITE);
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextDatum(MC_DATUM);
+    tft.setFreeFont(&FreeSansBold12pt7b);
+    tft.drawString("STOP", 272, 205);
+    tft.setFreeFont(NULL);
+    tft.setTextDatum(TL_DATUM);
+}
+
 void zeichneHauptbildschirm() {
-    zeichneSchaufelButton();
     zeichneWiFiStatus();
     zeichneSignalBars(signalBars);
+
+    if (currentTab == TAB_FLOW) {
+        // Confirm-Modal hat hoechste Prioritaet
+        if (flow::pendingConfirmPreset() > 0) {
+            zeichneFlowConfirmModal();
+            zeichneTabSwitchButton();
+            return;
+        }
+        if (flow::staSwitchTimedOut()) {
+            zeichneFlowFallback();
+        } else if (flow::staSwitchInProgress() || !flow::wsConnected()) {
+            // Spinner solange noch keine Frames eingegangen sind
+            if (flow::staSwitchInProgress()) {
+                zeichneFlowSpinner();
+            } else {
+                zeichneFlowTab();   // mit Greying da !wsConnected
+            }
+        } else {
+            zeichneFlowTab();
+        }
+        zeichneTabSwitchButton();
+        return;
+    }
+
+    // Schaufel-Tab — klassisches v1.0.2-Hauptbildschirm-Layout
+    zeichneSchaufelButton();
     tft.drawLine(0, 155, 320, 155, TFT_DARKGREY);
     zeichneAdd2Gewicht();
     zeichneButton(BTN1_X, BTN1_Y, "TOTAL", !add2ZeroModus, add2DatenVorhanden && !add2WaageOff);
     zeichneButton(BTN2_X, BTN2_Y, "ZERO",  add2ZeroModus,  add2DatenVorhanden && !add2WaageOff);
+    // Tab-Switch ZULETZT, sonst loescht zeichneAdd2Gewicht (y=50..150) die untere Haelfte.
+    zeichneTabSwitchButton();
 }
 
 void updateHauptbildschirm() {
+    // Flow-Tab: bei aktivem Modal/Spinner/Fallback nicht ueberzeichnen.
+    if (currentTab == TAB_FLOW) {
+        if (flow::pendingConfirmPreset() > 0) return;
+        if (flow::staSwitchInProgress() || flow::staSwitchTimedOut()) return;
+        // Mid-content-Bereich neu zeichnen — fillRect ueber Liter + L/min + State-Badge,
+        // dann Texte/Buttons. Tab-Switch + Header bleiben unberuehrt.
+        tft.fillRect(0, 40, 320, 140, TFT_BLACK);
+        zeichneFlowTab();
+        zeichneTabSwitchButton();
+        return;
+    }
+
     if (!add2DatenVorhanden || add2WaageOff) {
         add2AnzeigeGewicht = -9999;
     } else if (add2ZeroModus) {
@@ -260,6 +525,8 @@ void updateHauptbildschirm() {
 
     if (add2AnzeigeGewicht != lastAdd2Anzeige || add2DatenVorhanden != lastAdd2DatenStatus || add2WaageOff != lastWaageOff) {
         zeichneAdd2Gewicht();
+        // Tab-Switch wird vom fillRect in zeichneAdd2Gewicht in der unteren Haelfte ueberschrieben — neu zeichnen.
+        zeichneTabSwitchButton();
         lastAdd2Anzeige = add2AnzeigeGewicht;
         lastAdd2DatenStatus = add2DatenVorhanden;
         lastWaageOff = add2WaageOff;

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($env:Path = \"C:\\\\Users\\\\MST\\\\.platformio\\\\penv\\\\Scripts;$env:Path\"; pio --version)",
+      "PowerShell($env:Path = \"C:\\\\Users\\\\MST\\\\.platformio\\\\penv\\\\Scripts;$env:Path\"; pio run -e main -e wifi_test -e display_test -e flow_tab_test 2>&1 | Select-Object -Last 30)",
+      "Bash(git -C \"D:/Add2go\" status*)",
+      "Bash(git -C \"D:/Add2go\" log*)",
+      "Bash(git -C \"D:/Add2go\" diff*)",
+      "Bash(git -C \"D:/Add2go\" add add2go_empfaenger_pio*)"
+    ]
+  }
+}

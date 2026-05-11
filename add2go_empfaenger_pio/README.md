@@ -38,12 +38,12 @@ pio run -e main -e wifi_test -e display_test -e flow_tab_test   # alle 4 Envs
 
 | Phase | Komponente | Status |
 |-------|------------|--------|
-| 3c-1  | Repo-Init + Auto-Push-Hook + gitignore-Setup | ⏳ in progress |
-| 3c-2  | PlatformIO-Skelett + 4 Env-Stubs | ⏳ pending |
-| 3c-3  | Sketch-Migration in Module (Spaghetti → Module) | ⏳ pending |
-| 3c-4  | Tab-Bar + Schaufel-Tab kapseln | ⏳ pending |
-| 3c-5  | Flow-Tab mit WebSocketsClient | ⏳ pending |
-| 3c-6  | Doku finalisieren | ⏳ pending |
+| 3c-1  | Repo-Init + Auto-Push-Hook + gitignore-Setup | ✅ done |
+| 3c-2  | PlatformIO-Skelett + 4 Env-Stubs | ✅ done |
+| 3c-3  | Sketch-Migration in Module (Spaghetti → Module) | ✅ Code komplett, Display + NVS verifiziert am 2026-05-11 |
+| 3c-4  | Tab-Switch-Button (rechts oben, Wassertropfen ↔ ADD2) | ✅ visuell verifiziert |
+| 3c-5  | Flow-Tab mit WebSocketsClient + Confirm-Modal + Offline-Greying | ✅ Code komplett + Build grün, E2E-Test pending (add2flow ON nötig) |
+| 3c-6  | Doku finalisieren | ✅ done |
 
 ## Doku-Files
 

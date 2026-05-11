@@ -54,34 +54,36 @@ pio device monitor                                             # 115200
 pio run -e main -e wifi_test -e display_test -e flow_tab_test  # Build-Gate, alle 4 Envs
 ```
 
-## Phase 3c-Sequenz
+## Phase 3c-Sequenz (alle abgeschlossen)
 
-1. **3c-1** Repo-Init + Auto-Push-Hook + gitignore (3 Sub-Schritte 1a/1b/1c)
-2. **3c-2** PlatformIO-Skelett + 4 Env-Stubs (`main`, `wifi_test`, `display_test`, `flow_tab_test`)
-3. **3c-3** Sketch-Migration in Module — **RISIKO**: Spaghetti zu Modulen, Hardware-Test gegen REGRESSION_CHECKLIST.md zwingend
-4. **3c-4** Tab-Bar einbauen, Schaufel-Tab kapseln
-5. **3c-5** Flow-Tab mit WebSocketsClient + STA-Switch + Confirm-Modal + Offline-Greying
-6. **3c-6** Doku finalisieren
+1. **3c-1** ✅ Repo-Init + Auto-Push-Hook + gitignore (3 Sub-Schritte 1a/1b/1c)
+2. **3c-2** ✅ PlatformIO-Skelett + 4 Env-Stubs (`main`, `wifi_test`, `display_test`, `flow_tab_test`)
+3. **3c-3** ✅ Sketch-Migration in Module — Hardware-Display/NVS verifiziert, volle Regression-Test pending
+4. **3c-4** ✅ Tab-Switch-Button (Wassertropfen ↔ "ADD2") rechts oben
+5. **3c-5** ✅ Flow-Tab mit WebSocketsClient + STA-Switch + Confirm-Modal + Offline-Greying + Fallback-Screen
+6. **3c-6** ✅ Doku finalisieren
+
+**E2E-Test pending**: Vollständiger Test add2flow ↔ Empfänger ist offen
+bis beide Geräte gleichzeitig laufen + REGRESSION_CHECKLIST.md durchgespielt
+ist (siehe Schritt 3 + Validation der Flow-Tab-Funktionen).
 
 Detail-Plan: siehe `C:\Users\MST\.claude\plans\abstract-hugging-raven.md`
 (Phase-3c-Plan, freigegeben 2026-05-11).
 
-## Architektur (Stand Skelett)
-
-Module entstehen in Schritt 3 (Migration). Erwartete Aufteilung:
+## Architektur
 
 | Modul | Verantwortung |
 |-------|---------------|
-| `include/config.h` | Pin-Defines, Konstanten zentral |
-| `src/storage.{h,cpp}` | NVS-Wrapper (Tara, Faktor, Filter) |
-| `src/state.h` | Globals als extern |
-| `src/network.{h,cpp}` | WiFi STA + UDP-Empfang vom Sender |
-| `src/scale.{h,cpp}` | ADS1115 + Reed + Filter + ADS-Watchdog |
-| `src/display.{h,cpp}` | TFT-Init + Render-Funktionen (`zeichne*`) |
-| `src/touch.{h,cpp}` | Touch-Routing pro Menü |
-| `src/ui.{h,cpp}` | MenuState + Tab-State |
-| `src/flow_tab.{h,cpp}` | **Nur** WS-Logik + Parser + State-Cache. **Kein TFT-Code** — Rendering in `display::zeichneFlowTab()`. |
-| `src/main.cpp` | Orchestrierung |
+| [include/config.h](include/config.h) | Pin-Defines, Konstanten zentral, WIFI_AP_*, STA-Switch-Timeout |
+| [src/storage.{h,cpp}](src/storage.cpp) | NVS-Wrapper (Tara, Faktor, Filter) — Namespace `"schaufel"` |
+| [src/state.{h,cpp}](src/state.cpp) | Globals als extern (Definitionen + init in state.cpp) inkl. `currentTab` |
+| [src/network.{h,cpp}](src/network.cpp) | WiFi STA + UDP-Empfang vom Sender, **SSID-Wahl abhängig vom currentTab**, `onTabChanged()` |
+| [src/scale.{h,cpp}](src/scale.cpp) | ADS1115 + Reed + Filter + ADS-Watchdog (10 + 50-Stuck) |
+| [src/display.{h,cpp}](src/display.cpp) | TFT-Init + Render-Funktionen (`zeichne*`). Phase 3c: `zeichneTabSwitchButton`, `zeichneFlowTab`, `zeichneFlowConfirmModal`, `zeichneFlowFallback`, `zeichneFlowSpinner`. |
+| [src/touch.{h,cpp}](src/touch.cpp) | Touch-Routing pro Menü. Tab-Switch-Button-Check first. Im Flow-Tab Forwarding an `flow::handleTouch`. |
+| [src/ui.{h,cpp}](src/ui.cpp) | MenuState Live-Update (Position-Loss-Protection) |
+| [src/flow_tab.{h,cpp}](src/flow_tab.cpp) | **Nur** WS-Logik + Parser + State-Cache. **Kein TFT-Code** — Rendering in `display::zeichneFlowTab()`. Confirm-Modal-State und Touch-Logik hier. |
+| [src/main.cpp](src/main.cpp) | Orchestrierung: setup-Sequenz, loop-Schleife mit `scale::handleReed/ADC`, `network::handleWiFi/UDP/RSSI`, `flow::loop`, `touch::handle`, `display::handle`, `ui::handleMenuLiveUpdate` |
 
 ## Hardware-Pin-Map
 

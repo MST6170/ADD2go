@@ -10,7 +10,9 @@
 #define REED_SENSOR_PIN     36   // Reed-Kontakt fuer Wiegeposition (LOW = drauf)
 #define I2C_SDA             21
 #define I2C_SCL             22
-// TFT-Pins + TOUCH_CS werden via build_flags an TFT_eSPI uebergeben (siehe platformio.ini)
+// TFT-Pins + TOUCH_CS werden via build_flags an TFT_eSPI uebergeben (siehe platformio.ini).
+// TOUCH_CS_PIN brauchen wir aber als Compile-Zeit-Konstante fuer XPT2046_Touchscreen-Konstruktor.
+#define TOUCH_CS_PIN        15
 #define TOUCH_IRQ           14
 
 // ---- Watchdog ----

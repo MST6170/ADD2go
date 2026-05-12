@@ -408,7 +408,9 @@ static uint16_t        s_lastFlowP3         = 0xFFFF;
 static bool            s_lastFlowConnected  = false;
 
 static void drawFlowLiters(uint16_t done, uint16_t target, bool connected) {
-    tft.fillRect(0, 50, 320, 50, TFT_BLACK);
+    // fillRect nur bis x=280 — der Tab-Switch-Button (x=283..318, y=30..65)
+    // ueberlappt y=50..65 und wuerde sonst seine untere Haelfte verlieren.
+    tft.fillRect(0, 50, 280, 50, TFT_BLACK);
     char buf[20];
     snprintf(buf, sizeof(buf), "%u / %u", (unsigned)done, (unsigned)target);
     tft.setTextColor(connected ? TFT_WHITE : TFT_DARKGREY);
